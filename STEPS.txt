@@ -1,0 +1,66 @@
+Steps to COMPRESS:
+
+Input parameters: <AIFF input file> <CADU output file> <Percentage of information to keep>
+
+1) Read <AIFF input file>:
+	- Get info: nSamples, channels, samplingRate, bitsPerSample
+	- Read samples
+	- Return array of samples for each channel
+
+2) Calculate FFT for each channel
+	- Return array of FFTs
+
+3) For each FFT:
+	- Crop FFT to <Percentage of information to keep>
+	  (This percentage is based on the sum of all FFT terms. Keep from 0 to n)
+	- Return n
+
+4) Write <CADU output file>:
+	- Header:
+		- nSamples, samplingRate, bitsPerSample, channels
+	- Body:
+		- number of points for channel
+		- FFT arrays (complex numbers)
+
+Step to UNCOMPRESS:
+
+Input parameters: <CADU input file> <AIFF output file>
+
+1) Read <CADU input file>:
+	- Get info: nSamples, samplingRate, bitsPerSample, channels
+	- Read FFTs: 
+		- Number of points
+		- Points
+
+2) For each FFT:
+	- Start with zeros
+	- Fill with data read from <CADU input file>
+	- Calculate normalized inverse FFT
+
+4) Convert samples from float to int32 and interleave
+
+5) Write <AIFF output file>:
+	- Format from <CADU input file> info
+	- Samples of channels interleaved
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
