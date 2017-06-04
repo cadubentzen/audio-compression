@@ -4,6 +4,8 @@
 
 #include "cadu.h"
 
+#define COMPRESS 16
+
 
 int main(int argc, char **argv)
 {
@@ -33,8 +35,16 @@ int main(int argc, char **argv)
 	cadu_input_path = argv[1];
 	aiff_output_path = argv[2];
 
-	read_cadu_file( cadu_input_path, &ffts, &nSamples, &channels,
-				    &samplingRate, &bitsPerSample );
+#if (COMPRESS == 8)
+	read_cadu_file_int8( cadu_input_path, &ffts, &nSamples, &channels,
+				    	 &samplingRate, &bitsPerSample );
+#elif (COMPRESS == 16)
+	read_cadu_file_int16( cadu_input_path, &ffts, &nSamples, &channels,
+				    	  &samplingRate, &bitsPerSample );
+#else
+	read_cadu_file_int32( cadu_input_path, &ffts, &nSamples, &channels,
+				    	  &samplingRate, &bitsPerSample );
+#endif
 
 	inverse_fft( ffts, &samples, nSamples, channels );
 
@@ -43,7 +53,7 @@ int main(int argc, char **argv)
 	write_aiff_file( aiff_output_path, samples_final, nSamples,
 					 channels, samplingRate, bitsPerSample );
 
-	free_arrays( samples, ffts, samples_final, NULL, nSamples, channels );
+	free_arrays( samples, ffts, NULL, NULL, samples_final, NULL, nSamples, channels );
 
 	printf("#ALL #DONE xD\n");
 

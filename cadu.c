@@ -241,9 +241,163 @@ void crop_ffts ( complex_int32 **ffts, uint64_t **num_terms, uint16_t percentage
 #endif
 }
 
+void discretize_ffts_int16 ( complex_int32 **ffts, complex_int16 ***ffts16, int32_t **max_terms,
+							 uint64_t *num_terms, uint64_t nSamples, uint16_t channels )
+{
+	uint16_t i;
+	uint64_t j;
+	int32_t max_aux, aux;
 
-void write_cadu_file ( char *cadu_output_path, complex_int32 **ffts, uint64_t *num_terms, uint64_t nSamples, 
-					   uint16_t channels, double samplingRate, uint16_t bitsPerSample )
+#if DEBUG
+	char sample_name[40];
+	FILE *testFile;
+#endif
+
+	printf("Discretizing FFTs to 8 bits... ");
+	// Allocate memory
+	*ffts16 = (complex_int16**) malloc( sizeof(complex_int16*) *  channels );
+	*max_terms = (int32_t*) malloc( sizeof(int32_t) * channels );
+	for ( i = 0; i < channels; ++i )
+	{
+		(*ffts16)[i] = (complex_int16*) malloc( sizeof(complex_int16) * num_terms[i] );
+		max_aux = 0;
+		for ( j = 0; j < num_terms[i]; ++j)
+		{
+			aux = magnitude_complex_int32( ffts[i][j] );
+			if ( aux > max_aux ) max_aux = aux;
+		}
+		(*max_terms)[i] = max_aux; 
+	}
+
+	// Populate ffts8
+	for ( i = 0; i < channels; ++i )
+	{
+		for ( j = 0; j < num_terms[i]; ++j)
+		{
+			(*ffts16)[i][j].a = (int16_t) ( INT16_MAX * ( ( (float) ffts[i][j].a ) / (*max_terms)[i] ) );
+			(*ffts16)[i][j].b = (int16_t) ( INT16_MAX * ( ( (float) ffts[i][j].b ) / (*max_terms)[i] ) );
+		}
+	}
+	printf("DONE\n");
+
+#if DEBUG
+	printf("\
+###############################\n\
+  Testing discretize_ffts()\n\
+###############################\n\n"
+	);
+
+	for ( i = 0; i < channels; ++i )
+	{
+		sprintf( sample_name, "test_fft_discrete_channel_%" PRIu16 ".dat", i );
+		printf( "Writing FFT magnitude of channel %" PRIu16 " to %s... ", i, sample_name );
+		testFile = fopen(sample_name, "w");
+		if ( testFile == NULL )
+		{
+			fprintf(stderr, "Error opening file %s.\n", sample_name);
+			exit(EXIT_FAILURE);
+		}
+
+		for ( j = 0; j < (nSamples/2 + 1); ++j )
+		{
+			if(j < num_terms[i])
+			{
+				fprintf( testFile, "%" PRIu16 "\n", 
+					 (uint32_t) sqrt( (*ffts16)[i][j].a * (*ffts16)[i][j].a + 
+					 				  (*ffts16)[i][j].b * (*ffts16)[i][j].b ) );
+			}
+			else {
+				fprintf( testFile, "0\n");
+			}
+		}
+		printf( "DONE\n" );
+
+		fclose(testFile);
+	}
+#endif
+	printf("\n");
+}
+
+void discretize_ffts_int8 ( complex_int32 **ffts, complex_int8 ***ffts8, int32_t **max_terms,
+							uint64_t *num_terms, uint64_t nSamples, uint16_t channels )
+{
+	uint16_t i;
+	uint64_t j;
+	int32_t max_aux, aux;
+
+#if DEBUG
+	char sample_name[40];
+	FILE *testFile;
+#endif
+
+	printf("Discretizing FFTs to 8 bits... ");
+	// Allocate memory
+	*ffts8 = (complex_int8**) malloc( sizeof(complex_int8*) *  channels );
+	*max_terms = (int32_t*) malloc( sizeof(int32_t) * channels );
+	for ( i = 0; i < channels; ++i )
+	{
+		(*ffts8)[i] = (complex_int8*) malloc( sizeof(complex_int8) * num_terms[i] );
+		max_aux = 0;
+		for ( j = 0; j < num_terms[i]; ++j)
+		{
+			aux = magnitude_complex_int32( ffts[i][j] );
+			if ( aux > max_aux ) max_aux = aux;
+		}
+		(*max_terms)[i] = max_aux; 
+	}
+
+	// Populate ffts8
+	for ( i = 0; i < channels; ++i )
+	{
+		for ( j = 0; j < num_terms[i]; ++j)
+		{
+			(*ffts8)[i][j].a = (int8_t) ( INT8_MAX * ( ( (float) ffts[i][j].a ) / (*max_terms)[i] ) );
+			(*ffts8)[i][j].b = (int8_t) ( INT8_MAX * ( ( (float) ffts[i][j].b ) / (*max_terms)[i] ) );
+		}
+	}
+	printf("DONE\n");
+
+#if DEBUG
+	printf("\
+###############################\n\
+  Testing discretize_ffts()\n\
+###############################\n\n"
+	);
+
+	for ( i = 0; i < channels; ++i )
+	{
+		sprintf( sample_name, "test_fft_discrete_channel_%" PRIu16 ".dat", i );
+		printf( "Writing FFT magnitude of channel %" PRIu16 " to %s... ", i, sample_name );
+		testFile = fopen(sample_name, "w");
+		if ( testFile == NULL )
+		{
+			fprintf(stderr, "Error opening file %s.\n", sample_name);
+			exit(EXIT_FAILURE);
+		}
+
+		for ( j = 0; j < (nSamples/2 + 1); ++j )
+		{
+			if(j < num_terms[i])
+			{
+				fprintf( testFile, "%" PRIu32 "\n", 
+					 (uint32_t) sqrt( (*ffts8)[i][j].a * (*ffts8)[i][j].a + 
+					 				  (*ffts8)[i][j].b * (*ffts8)[i][j].b ) );
+			}
+			else {
+				fprintf( testFile, "0\n");
+			}
+		}
+		printf( "DONE\n" );
+
+		fclose(testFile);
+	}
+#endif
+	printf("\n");
+}
+
+
+void write_cadu_file_int32 ( char *cadu_output_path, complex_int32 **ffts, uint64_t *num_terms, uint64_t nSamples, 
+					   		 uint16_t channels, double samplingRate, uint16_t bitsPerSample )
 {
 	uint16_t i;
 
@@ -275,9 +429,77 @@ void write_cadu_file ( char *cadu_output_path, complex_int32 **ffts, uint64_t *n
 	printf("\n");
 }
 
+void write_cadu_file_int16 ( char *cadu_output_path, complex_int16 **ffts16, uint64_t *num_terms, int32_t *max_terms,
+							 uint64_t nSamples, uint16_t channels, double samplingRate, uint16_t bitsPerSample )
+{
+	uint16_t i;
 
-void read_cadu_file ( char *cadu_input_path, complex_int32 ***ffts, uint64_t *nSamples, 
-					  uint16_t *channels, double *samplingRate, uint16_t *bitsPerSample )
+	FILE *caduFile;
+
+	caduFile = fopen( cadu_output_path, "wb" );
+	if ( caduFile == NULL )
+	{
+		fprintf( stderr, "Error opening CADU output file %s.\n", cadu_output_path );
+		exit(EXIT_FAILURE);
+	}
+
+	printf("Writing header to CADU file... ");
+	fwrite( &nSamples,      sizeof(uint64_t),   1, caduFile );
+	fwrite( &samplingRate,  sizeof(double),     1, caduFile );
+	fwrite( &bitsPerSample, sizeof(uint16_t),   1, caduFile );
+	fwrite( &channels,      sizeof(uint16_t),   1, caduFile );
+	printf( "DONE\n" );
+
+	printf("Writing body to CADU file... ");
+	for ( i = 0; i < channels; ++i )
+	{
+		fwrite( num_terms+i, sizeof(uint64_t),      1,            caduFile );
+		fwrite( max_terms+i, sizeof(int32_t),       1,            caduFile );
+		fwrite( ffts16[i],   sizeof(complex_int16),  num_terms[i], caduFile );
+	}
+	printf( "DONE\n" );
+
+	fclose(caduFile);
+	printf("\n");
+}
+
+void write_cadu_file_int8 ( char *cadu_output_path, complex_int8 **ffts8, uint64_t *num_terms, int32_t *max_terms,
+							uint64_t nSamples, uint16_t channels, double samplingRate, uint16_t bitsPerSample )
+{
+	uint16_t i;
+
+	FILE *caduFile;
+
+	caduFile = fopen( cadu_output_path, "wb" );
+	if ( caduFile == NULL )
+	{
+		fprintf( stderr, "Error opening CADU output file %s.\n", cadu_output_path );
+		exit(EXIT_FAILURE);
+	}
+
+	printf("Writing header to CADU file... ");
+	fwrite( &nSamples,      sizeof(uint64_t),   1, caduFile );
+	fwrite( &samplingRate,  sizeof(double),     1, caduFile );
+	fwrite( &bitsPerSample, sizeof(uint16_t),   1, caduFile );
+	fwrite( &channels,      sizeof(uint16_t),   1, caduFile );
+	printf( "DONE\n" );
+
+	printf("Writing body to CADU file... ");
+	for ( i = 0; i < channels; ++i )
+	{
+		fwrite( num_terms+i, sizeof(uint64_t),      1,            caduFile );
+		fwrite( max_terms+i, sizeof(int32_t),       1,            caduFile );
+		fwrite( ffts8[i],    sizeof(complex_int8),  num_terms[i], caduFile );
+	}
+	printf( "DONE\n" );
+
+	fclose(caduFile);
+	printf("\n");
+}
+
+
+void read_cadu_file_int32 ( char *cadu_input_path, complex_int32 ***ffts, uint64_t *nSamples, 
+					  		uint16_t *channels, double *samplingRate, uint16_t *bitsPerSample )
 {
 	FILE *caduFile;
 #if DEBUG
@@ -338,6 +560,184 @@ void read_cadu_file ( char *cadu_input_path, complex_int32 ***ffts, uint64_t *nS
 	}
 	printf( "DONE\n" );
 	printf( "\n" );
+
+	fclose(caduFile);
+}
+
+void read_cadu_file_int16 ( char *cadu_input_path, complex_int32 ***ffts, uint64_t *nSamples, 
+					  		uint16_t *channels, double *samplingRate, uint16_t *bitsPerSample )
+{
+	FILE *caduFile;
+	complex_int16 **ffts16;
+	int32_t max_term;
+
+#if DEBUG
+	char fft_filename[40];
+	FILE *fftFile;
+#endif
+
+	uint64_t num_terms, j;
+
+	uint16_t i;
+
+	caduFile = fopen( cadu_input_path, "rb" );
+	if ( caduFile == NULL )
+	{
+		fprintf( stderr, "Error opening CADU input file %s.\n", cadu_input_path );
+		exit(EXIT_FAILURE);
+	}
+
+	printf("Reading header of CADU file... ");
+	fread( nSamples,      sizeof(uint64_t),   1, caduFile );
+	fread( samplingRate,  sizeof(double),     1, caduFile );
+	fread( bitsPerSample, sizeof(uint16_t),   1, caduFile );
+	fread( channels,      sizeof(uint16_t),   1, caduFile );
+	printf( "DONE\n" );
+
+	ffts16 = (complex_int16**) malloc( sizeof(complex_int16*) * (*channels) );
+
+#if DEBUG
+	printf( "\ncadu_input_path = %s\n", cadu_input_path );
+	printf( "nSamples = %llu\n", *nSamples );
+	printf( "samplingRate = %f\n", *samplingRate );
+	printf( "bitsPerSample = %u\n", *bitsPerSample );
+	printf( "channels = %u\n", *channels );
+
+	printf("Reading body of CADU file...\n");
+#else
+	printf("Reading body of CADU file... ");
+#endif
+	
+	*ffts = (complex_int32**) malloc( sizeof(complex_int32*) * (*channels) );
+	for ( i = 0; i < *channels; ++i )
+	{
+		(*ffts)[i] = (complex_int32*) malloc( sizeof(complex_int32) * ((*nSamples)/2 + 1) );
+		memset( (*ffts)[i], 0, sizeof(complex_int32) * ((*nSamples)/2 + 1) );
+
+		fread( &num_terms, sizeof(uint64_t), 1, caduFile );
+		ffts16[i] = (complex_int16*) malloc( sizeof(complex_int16) * num_terms );
+
+		fread( &max_term, sizeof(int32_t), 1, caduFile );
+
+		fread( ffts16[i], sizeof(complex_int16), num_terms, caduFile );
+
+		for ( j = 0; j < num_terms; ++j )
+		{
+			(*ffts)[i][j].a = (int32_t) ( ffts16[i][j].a * ( ( (float) max_term ) / INT16_MAX ) );
+			(*ffts)[i][j].b = (int32_t) ( ffts16[i][j].b * ( ( (float) max_term ) / INT16_MAX ) );
+		}
+
+		free( ffts16[i] );
+
+
+	#if DEBUG
+		sprintf( fft_filename, "test_fft_uncompressed_ch_%u.dat", i);
+		printf("Writing FFT to %s...\n", fft_filename);
+		fftFile = fopen( fft_filename, "w" );
+		for ( j = 0; j < ((*nSamples)/2 + 1); ++j )
+		{
+			fprintf( fftFile, "%u\n",
+					 (uint32_t) sqrt( (*ffts)[i][j].a * (*ffts)[i][j].a + 
+					 				  (*ffts)[i][j].b * (*ffts)[i][j].b ) );
+		}
+		fclose(fftFile);
+	#endif
+
+	}
+
+	printf( "DONE\n" );
+	printf( "\n" );
+
+	free(ffts16);
+
+	fclose(caduFile);
+}
+
+void read_cadu_file_int8 ( char *cadu_input_path, complex_int32 ***ffts, uint64_t *nSamples, 
+					  	   uint16_t *channels, double *samplingRate, uint16_t *bitsPerSample )
+{
+	FILE *caduFile;
+	complex_int8 **ffts8;
+	int32_t max_term;
+
+#if DEBUG
+	char fft_filename[40];
+	FILE *fftFile;
+#endif
+
+	uint64_t num_terms, j;
+
+	uint16_t i;
+
+	caduFile = fopen( cadu_input_path, "rb" );
+	if ( caduFile == NULL )
+	{
+		fprintf( stderr, "Error opening CADU input file %s.\n", cadu_input_path );
+		exit(EXIT_FAILURE);
+	}
+
+	printf("Reading header of CADU file... ");
+	fread( nSamples,      sizeof(uint64_t),   1, caduFile );
+	fread( samplingRate,  sizeof(double),     1, caduFile );
+	fread( bitsPerSample, sizeof(uint16_t),   1, caduFile );
+	fread( channels,      sizeof(uint16_t),   1, caduFile );
+	printf( "DONE\n" );
+
+	ffts8 = (complex_int8**) malloc( sizeof(complex_int8*) * (*channels) );
+
+#if DEBUG
+	printf( "\ncadu_input_path = %s\n", cadu_input_path );
+	printf( "nSamples = %llu\n", *nSamples );
+	printf( "samplingRate = %f\n", *samplingRate );
+	printf( "bitsPerSample = %u\n", *bitsPerSample );
+	printf( "channels = %u\n", *channels );
+
+	printf("Reading body of CADU file...\n");
+#else
+	printf("Reading body of CADU file... ");
+#endif
+	
+	*ffts = (complex_int32**) malloc( sizeof(complex_int32*) * (*channels) );
+	for ( i = 0; i < *channels; ++i )
+	{
+		(*ffts)[i] = (complex_int32*) malloc( sizeof(complex_int32) * ((*nSamples)/2 + 1) );
+		memset( (*ffts)[i], 0, sizeof(complex_int32) * ((*nSamples)/2 + 1) );
+
+		fread( &num_terms, sizeof(uint64_t), 1, caduFile );
+		ffts8[i] = (complex_int8*) malloc( sizeof(complex_int8) * num_terms );
+
+		fread( &max_term, sizeof(int32_t), 1, caduFile );
+
+		fread( ffts8[i], sizeof(complex_int8), num_terms, caduFile );
+
+		for ( j = 0; j < num_terms; ++j )
+		{
+			(*ffts)[i][j].a = (int32_t) ( ffts8[i][j].a * ( ( (float) max_term ) / INT8_MAX ) );
+			(*ffts)[i][j].b = (int32_t) ( ffts8[i][j].b * ( ( (float) max_term ) / INT8_MAX ) );
+		}
+
+		free( ffts8[i] );
+
+
+	#if DEBUG
+		sprintf( fft_filename, "test_fft_uncompressed_ch_%u.dat", i);
+		printf("Writing FFT to %s...\n", fft_filename);
+		fftFile = fopen( fft_filename, "w" );
+		for ( j = 0; j < ((*nSamples)/2 + 1); ++j )
+		{
+			fprintf( fftFile, "%u\n",
+					 (uint32_t) sqrt( (*ffts)[i][j].a * (*ffts)[i][j].a + 
+					 				  (*ffts)[i][j].b * (*ffts)[i][j].b ) );
+		}
+		fclose(fftFile);
+	#endif
+
+	}
+
+	printf( "DONE\n" );
+	printf( "\n" );
+
+	free(ffts8);
 
 	fclose(caduFile);
 }
@@ -471,9 +871,18 @@ void write_aiff_file ( char *aiff_output_path, int32_t *samples_final, uint64_t 
 	AIFF_CloseFile(ref);
 }
 
+int32_t magnitude_complex_int32 ( complex_int32 complex_number )
+{
+	int32_t magnitude = (int32_t) sqrt( complex_number.a * complex_number.a +
+										  complex_number.b * complex_number.b );
 
-void free_arrays ( float **samples, complex_int32 **ffts, int32_t *samples_final,
-				   uint64_t *num_terms, uint64_t nSamples, uint16_t channels )
+	return magnitude;
+}
+
+
+void free_arrays ( float **samples, complex_int32 **ffts, complex_int16 **ffts16, complex_int8 **ffts8, 
+				   int32_t *samples_final, uint64_t *num_terms, uint64_t nSamples, 
+				   uint16_t channels )
 {
 	uint16_t i;
 
@@ -483,10 +892,14 @@ void free_arrays ( float **samples, complex_int32 **ffts, int32_t *samples_final
 	{
 		free( samples[i] );
 		free( ffts[i] );
+		if(ffts16 != NULL) free( ffts16[i] ); 
+		if(ffts8 != NULL) free( ffts8[i] ); 
 	}
 
 	free(samples);
 	free(ffts);
+	if(ffts16 != NULL) free( ffts16 ); 
+	if(ffts8 != NULL) free( ffts8 ); 
 	if(samples_final != NULL) free(samples_final);
 	if(num_terms != NULL) free(num_terms);
 
