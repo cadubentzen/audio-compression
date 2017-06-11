@@ -4,12 +4,12 @@
 	<head>
 		<meta charset="utf-8">
 
-		<title>reveal.js - Math Plugin</title>
+		<title>Compressão de Áudio digital utilizando a FFT'</title>
 
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
 		<link rel="stylesheet" href="./css/reveal.css">
-		<link rel="stylesheet" href="./css/theme/night.css" id="theme">
+		<link rel="stylesheet" href="./css/theme/blood.css" id="theme">
 	</head>
 
 	<body>
@@ -19,8 +19,44 @@
 			<div class="slides">
 
 				<section>
-					<h2>reveal.js Math Plugin</h2>
-					<p>A thin wrapper for MathJax</p>
+					<h2>Compressão de Áudio digital utilizando a FFT</h2>
+					<p>Carlos Eduardo Ramalho Bentzen Fonseca</p>
+					<small>Universidade Federal do Rio Grande do Norte</small><br>
+					<small>DCA0118 - Processamento Digital de Sinais</small>
+				</section>
+
+				<section>
+					<section>
+						<h3>Introdução</h3>	
+					</section>
+					
+					<section>
+						<h4>A Transformada Discreta de Fourier (DFT)</h4>
+
+						\[ X_k = \sum_{n=0}^{N-1} x_n e^{-j 2 \pi k n/N} \]
+					</section>
+
+					<section>
+						<h4>O algoritmo da transformada rápida de Fourier (FFT)</h4>
+
+						<ul>
+							<li>Implementações tradicionais da DFT possuiam complexidade temporal $O(n^2)$</li>
+							<li>FFT possui complexidade temporal $O(n\log_2 n)$
+						</ul>
+					</section>
+
+					<section>
+						<h4>Formatos de áudios digital</h4>
+
+						<ul>
+							<li>Sem compressão: WAV, AIFF, AU ou RAW;</li>
+							<li>Compressão sem perdas: FLAC, WMA lossless;</li>
+							<li>Compressão com perdas: MP3, AAC, WMA lossy;</li>
+						</ul>
+
+						<!-- Inserir plot no tempo aqui -->
+					</section>
+
 				</section>
 
 				<section>
