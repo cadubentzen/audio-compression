@@ -302,7 +302,7 @@ void discretize_ffts_int16 ( complex_int32 **ffts, complex_int16 ***ffts16, int3
 		{
 			if(j < num_terms[i])
 			{
-				fprintf( testFile, "%" PRIu16 "\n", 
+				fprintf( testFile, "%" PRIu32 "\n", 
 					 (uint32_t) sqrt( (*ffts16)[i][j].a * (*ffts16)[i][j].a + 
 					 				  (*ffts16)[i][j].b * (*ffts16)[i][j].b ) );
 			}
