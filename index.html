@@ -9,7 +9,7 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
 		<link rel="stylesheet" href="./css/reveal.css">
-		<link rel="stylesheet" href="./css/theme/blood.css" id="theme">
+		<link rel="stylesheet" href="./css/theme/solarized.css" id="theme">
 	</head>
 
 	<body>
@@ -49,14 +49,167 @@
 						<h4>Formatos de áudios digital</h4>
 
 						<ul>
-							<li>Sem compressão: WAV, AIFF, AU ou RAW;</li>
-							<li>Compressão sem perdas: FLAC, WMA lossless;</li>
-							<li>Compressão com perdas: MP3, AAC, WMA lossy;</li>
+							<li>Sem compressão: WAV, AIFF, AU ou RAW</li>
+							<li>Compressão sem perdas: FLAC, WMA lossless</li>
+							<li>Compressão com perdas: MP3, AAC, WMA lossy</li>
 						</ul>
 
-						<!-- Inserir plot no tempo aqui -->
 					</section>
 
+				</section>
+
+				<section>
+					<h3>Objetivos</h3>
+
+					<ul>
+						<li>Converter AIFF $\Rightarrow$ Formato customizado</li>
+						<li>Utilizar FFT para compressão <b>com perdas</b></li>
+					</ul>
+				</section>
+
+				<section>
+					<h3>O formato AIFF</h3>
+
+					<ul>
+						<li>Som é expresso no tempo utilizando Pulse-code modulation (PCM)</li>
+						<li>Tamanho do arquivo = $bitsPerSample * nSamples * nChannels$</li>
+						<li>$nSamples = duration * samplingRate$</li>
+						<li>Ex: $fileSize = 16 * 8.7*10^6 * 2 \approx 33.3$ MB</li>
+					</ul>
+				</section>
+
+				<section>
+					<h3>Visualização de áudio no tempo</h3>
+
+					<p>Trilha: Day Is Done - Peter Paul And Mary</p>
+
+					<audio controls>
+					  <source src="audio/song.mp3" type="audio/mp3">
+					  Your browser does not support the audio tag.
+					</audio> 
+
+					<img src="img/time.png" />
+				</section>
+
+				<section>
+					<section>
+						<h3>Estratégia de compressão</h3>
+					</section>
+
+					<section>
+						<h4>Propriedade da DFT</h4>
+
+						<p>Para $x_n$ real:</p>
+
+						\[ X(k) = X^*(N-k) \]
+
+						<p>Isso implica que com $N/2$ termos da DFT, já é possível reconstruir o sinal no tempo.</p>
+					</section>
+					
+					<section>
+						<p>Ao visualizarmos a mesma música na frequência:</p>
+
+						<img src="img/fft.png"/>
+					</section>
+
+					<section>
+						<p>O que sugere que podemos tirar uma área útil do espectro:</p>
+
+						<img src="img/areas.png"/>
+					</section>
+				</section>
+
+				<section>
+					<section>
+						<h3>Extensão ".cadu"</h3>
+
+						<ul>
+							<li>Header: nSamples, samplingRate, bitsPerSample, channels</li>
+							<li>Payload for each channel: number of points for channel + FFT array</li>
+						</ul>
+					</section>
+
+					<section>
+						<h4>Como determinar número de pontos por canal</h4>
+
+						<ul>
+							<li>A partir da DFT, em $O(n)$ se calcula a área sob o espectro e o número de pontos para obter $X\%$ dessa área</li>
+							<li> 
+								Ex: para o som anterior, $N/2 = 4.3*10^6$.
+								<ul>
+									<li>70% da área: 398,641 pontos</li>
+									<li>80% da área: 633,437 pontos</li>
+									<li>90% da área: 1,175,535 pontos</li>
+									<li>95% da área: 2,007,068 pontos</li>
+								</ul>
+							</li>
+						</ul>
+					</section>
+				</section>
+
+				<section>
+					<h3>Resultados</h3>
+
+					<table>
+						<thead>
+							<th>Porcentagem</th>
+							<th>Compressão</th>
+							<th>Resultado</th>
+						</thead>
+						<tbody>
+							<tr>
+								<td>95%</td>
+								<td>46.8%</td>
+								<td>
+									<audio controls>
+									  <source src="audio/song.mp3" type="audio/mp3">
+									  Your browser does not support the audio tag.
+									</audio> 
+								</td>
+							</tr>
+							<tr>
+								<td>90%</td>
+								<td>28.8%</td>
+								<td>
+									<audio controls>
+									  <source src="audio/song.mp3" type="audio/mp3">
+									  Your browser does not support the audio tag.
+									</audio> 
+								</td>
+							</tr>
+							<tr>
+								<td>80%</td>
+								<td>15%</td>
+								<td>
+									<audio controls>
+									  <source src="audio/song.mp3" type="audio/mp3">
+									  Your browser does not support the audio tag.
+									</audio> 
+								</td>
+							</tr>
+							<tr>
+								<td>70%</td>
+								<td>9.5%</td>
+								<td>
+									<audio controls>
+									  <source src="audio/song.mp3" type="audio/mp3">
+									  Your browser does not support the audio tag.
+									</audio> 
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</section>
+
+				<section>
+					<h3>Tecnologias utilizadas</h3>
+
+					<ul>
+						<li>Linguagem de programção C</li>
+						<li><a href="http://aifftools.sourceforge.net/libaiff/">LibAiff</a></li>
+						<li><a href="http://fftw.org/">FFTW</a></li>
+						<li>Projeto disponível no GitHub: <br> <a href="https://github.com/cadubentzen/audio-compression">cadubentzen/audio-compression</a></li>
+					</ul>
 				</section>
 
 				<section>
